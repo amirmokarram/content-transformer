@@ -1,0 +1,54 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29806.167
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContentTransformer", "ContentTransformer\ContentTransformer.csproj", "{61F880FF-B254-4DB5-A810-691224FEFA95}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{A22FE946-F17E-4D2B-9BD5-BC75F1B24C8C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContentTransformer.Common", "ContentTransformer.Common\ContentTransformer.Common.csproj", "{35333FF9-CFDB-4C25-A011-9B1DCAAFFADE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SPAR.TransformerModule", "Modules\SPAR.TransformerModule\SPAR.TransformerModule.csproj", "{32AA6E05-9390-45FF-BA92-D30A561EEEDC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContentTransformer.Web", "ContentTransformer.Web\ContentTransformer.Web.csproj", "{A23CEA53-2C29-4B47-B3DF-140361F1F395}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContentTransformer.Test", "ContentTransformer.Test\ContentTransformer.Test.csproj", "{06111DFF-AC98-4DA2-BB7C-EE214AA6B00F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{61F880FF-B254-4DB5-A810-691224FEFA95}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{61F880FF-B254-4DB5-A810-691224FEFA95}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{61F880FF-B254-4DB5-A810-691224FEFA95}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{61F880FF-B254-4DB5-A810-691224FEFA95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{35333FF9-CFDB-4C25-A011-9B1DCAAFFADE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{35333FF9-CFDB-4C25-A011-9B1DCAAFFADE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{35333FF9-CFDB-4C25-A011-9B1DCAAFFADE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{35333FF9-CFDB-4C25-A011-9B1DCAAFFADE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{32AA6E05-9390-45FF-BA92-D30A561EEEDC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{32AA6E05-9390-45FF-BA92-D30A561EEEDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{32AA6E05-9390-45FF-BA92-D30A561EEEDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{32AA6E05-9390-45FF-BA92-D30A561EEEDC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A23CEA53-2C29-4B47-B3DF-140361F1F395}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A23CEA53-2C29-4B47-B3DF-140361F1F395}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A23CEA53-2C29-4B47-B3DF-140361F1F395}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A23CEA53-2C29-4B47-B3DF-140361F1F395}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06111DFF-AC98-4DA2-BB7C-EE214AA6B00F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06111DFF-AC98-4DA2-BB7C-EE214AA6B00F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06111DFF-AC98-4DA2-BB7C-EE214AA6B00F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06111DFF-AC98-4DA2-BB7C-EE214AA6B00F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{32AA6E05-9390-45FF-BA92-D30A561EEEDC} = {A22FE946-F17E-4D2B-9BD5-BC75F1B24C8C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {9542AC09-49F5-4A97-83BD-344572AD30C4}
+	EndGlobalSection
+EndGlobal
