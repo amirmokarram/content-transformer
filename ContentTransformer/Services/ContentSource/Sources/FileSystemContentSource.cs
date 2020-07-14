@@ -2,77 +2,92 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Security.Policy;
 using ContentTransformer.Common.ContentSource;
 
 namespace ContentTransformer.Services.ContentSource.Sources
 {
-    [ContentSourceConfig("path", Title = "Physical address path for watching content", ConfigType = ContentSourceConfigType.String, IsRequired = true)]
-    [ContentSourceConfig("filter", Title = "Filtering content", ConfigType = ContentSourceConfigType.String)]
-    internal class FileSystemContentSource : IContentSource
+    [ContentSourceConfig(ArchiveNameConfig, Title = "The archive directory name", ConfigType = ContentSourceConfigType.String, IsRequired = true)]
+    [ContentSourceConfig(PathConfig, Title = "Physical address path for watching content", ConfigType = ContentSourceConfigType.String, IsRequired = true)]
+    [ContentSourceConfig(FilterConfig, Title = "Filtering content", ConfigType = ContentSourceConfigType.String)]
+    internal class FileSystemContentSource : ContentSource
     {
-        private readonly FileSystemWatcher _watcher;
-        private readonly Dictionary<string, string> _parameters;
+        #region Config Constant
+        internal const string ArchiveNameConfig = "archiveName";
+        internal const string PathConfig = "path";
+        internal const string FilterConfig = "filter";
+        #endregion
 
+        private readonly FileSystemWatcher _watcher;
+        private string _archiveDirectoryName;
+        
         public FileSystemContentSource()
         {
             _watcher = new FileSystemWatcher();
             _watcher.EnableRaisingEvents = false;
-
-            _parameters = new Dictionary<string, string>();
         }
 
         #region Implementation of IContentSource
-        public event EventHandler<ContentSourceEventArgs> SourceChanged;
-
-        public void Init(IDictionary<string, string> parameters)
+        public override void Start()
         {
-            if (parameters != null)
-                foreach (KeyValuePair<string, string> parameterPair in parameters)
-                    _parameters.Add(parameterPair.Key, parameterPair.Value);
+            _watcher.EnableRaisingEvents = true;
+        }
+        public override void Pause()
+        {
+            _watcher.EnableRaisingEvents = false;
+        }
+        public override void Resume()
+        {
+            _watcher.EnableRaisingEvents = true;
+        }
+        public override byte[] Read(ContentSourceItem item)
+        {
+            return File.ReadAllBytes(item.Uri.AbsolutePath);
+        }
+        public override void Archive(ContentSourceItem item)
+        {
+            File.Move(item.Uri.AbsolutePath, Path.Combine(_archiveDirectoryName, Path.GetFileName(item.Uri.AbsolutePath)));
+        }
+        #endregion
+
+        #region Overrides of ContentSource
+        protected override void OnInit()
+        {
+            string archiveNameValue = ResolveParameter<string>(ArchiveNameConfig);
+            string normalizeArchiveName = archiveNameValue.StartsWith("$") ? archiveNameValue : $"${archiveNameValue}";
+            _archiveDirectoryName = Path.Combine(ResolveParameter<string>(PathConfig), normalizeArchiveName);
+
+            if (!Directory.Exists(_archiveDirectoryName))
+                Directory.CreateDirectory(_archiveDirectoryName);
 
             _watcher.BeginInit();
-            _watcher.Path = _parameters["path"];
+            _watcher.Path = ResolveParameter<string>(PathConfig);
             _watcher.Created += (sender, args) =>
             {
                 if (args.ChangeType != WatcherChangeTypes.Created)
                     return;
 
-                ContentSourceItem newItem = new ContentSourceItem(DateTime.Now, new Url(args.FullPath));
-                SourceChanged?.Invoke(this, new ContentSourceEventArgs(new[] { newItem }));
+                ContentSourceItem item = new ContentSourceItem(DateTime.Now, new Uri(args.FullPath));
+                RaiseSourceChanged(item);
             };
             _watcher.EndInit();
-        }
-        public void Start()
-        {
-            _watcher.EnableRaisingEvents = true;
-        }
-        public void Pause()
-        {
-            _watcher.EnableRaisingEvents = false;
-        }
-        public void Resume()
-        {
-            _watcher.EnableRaisingEvents = true;
-        }
-        public IEnumerable<ContentSourceItem> Items
-        {
-            get
-            {
-                _parameters.TryGetValue("filter", out string filter);
-                List<ContentSourceItem> result = new List<ContentSourceItem>();
-                foreach (string file in Directory.GetFiles(_parameters["path"], filter ?? "*.*", SearchOption.AllDirectories))
-                    result.Add(new ContentSourceItem(File.GetCreationTime(file), new Url(file)));
-                return result;
-            }
-        }
-        #endregion
 
-        #region Implementation of IDisposable
-        public void Dispose()
+            RaiseSourceChanged(ReadExistItems().ToArray());
+        }
+
+        protected override IEnumerable<ContentSourceItem> ReadExistItems()
+        {
+            string filterValue = ResolveParameter<string>(FilterConfig);
+            List<ContentSourceItem> result = new List<ContentSourceItem>();
+            foreach (string file in Directory.GetFiles(ResolveParameter<string>(PathConfig), filterValue ?? "*.*"))
+                result.Add(new ContentSourceItem(File.GetCreationTime(file), new Uri(file)));
+            return result;
+        }
+        protected override void Dispose(bool disposing)
         {
             _watcher.EnableRaisingEvents = false;
             _watcher.Dispose();
+
+            base.Dispose(disposing);
         }
         #endregion
     }

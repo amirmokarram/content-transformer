@@ -98,6 +98,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Api\ContentDiscoveryController.cs" />
+    <Compile Include="Services\ContentSource\ContentSource.cs" />
     <Compile Include="Services\ContentSource\Sources\FileSystemContentSource.cs" />
     <Compile Include="Services\ContentSource\Sources\FtpContentSource.cs" />
     <Compile Include="Program.cs" />

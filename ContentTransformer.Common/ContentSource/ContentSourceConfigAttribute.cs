@@ -3,7 +3,7 @@
 namespace ContentTransformer.Common.ContentSource
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
-    public class ContentSourceConfigAttribute : Attribute
+    public class ContentSourceConfigAttribute : Attribute, IContentSourceConfigItem
     {
         public ContentSourceConfigAttribute(string name)
         {

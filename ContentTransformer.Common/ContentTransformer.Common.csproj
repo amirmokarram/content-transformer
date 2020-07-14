@@ -46,6 +46,7 @@
     <Compile Include="ContentSource\ContentSourceEventArgs.cs" />
     <Compile Include="ContentSource\ContentSourceItem.cs" />
     <Compile Include="ContentSource\IContentSource.cs" />
+    <Compile Include="ContentSource\IContentSourceConfigItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceAttribute.cs" />
   </ItemGroup>
