@@ -97,17 +97,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Api\ContentDiscoveryController.cs" />
+    <Compile Include="Api\ContentSourceController.cs" />
     <Compile Include="Services\ContentSource\ContentSource.cs" />
     <Compile Include="Services\ContentSource\Sources\FileSystemContentSource.cs" />
     <Compile Include="Services\ContentSource\Sources\FtpContentSource.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\ContentSource\ContentSourceService.cs" />
+    <Compile Include="Services\ModuleDiscovery\ModuleDiscoveryService.cs" />
     <Compile Include="Startup.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <Content Include="ModuleCatalog.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -116,6 +120,8 @@
       <Name>ContentTransformer.Common</Name>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Services\ContentTransformer\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

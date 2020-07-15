@@ -4,6 +4,10 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 VisualStudioVersion = 16.0.29806.167
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ContentTransformer", "ContentTransformer\ContentTransformer.csproj", "{61F880FF-B254-4DB5-A810-691224FEFA95}"
+	ProjectSection(ProjectDependencies) = postProject
+		{32AA6E05-9390-45FF-BA92-D30A561EEEDC} = {32AA6E05-9390-45FF-BA92-D30A561EEEDC}
+		{A23CEA53-2C29-4B47-B3DF-140361F1F395} = {A23CEA53-2C29-4B47-B3DF-140361F1F395}
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Modules", "Modules", "{A22FE946-F17E-4D2B-9BD5-BC75F1B24C8C}"
 EndProject

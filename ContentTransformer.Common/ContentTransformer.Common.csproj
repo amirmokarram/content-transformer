@@ -41,15 +41,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ContentSource\ContentSourceConfigAttribute.cs" />
-    <Compile Include="ContentSource\ContentSourceConfigType.cs" />
-    <Compile Include="ContentSource\ContentSourceEventArgs.cs" />
-    <Compile Include="ContentSource\ContentSourceItem.cs" />
-    <Compile Include="ContentSource\IContentSource.cs" />
-    <Compile Include="ContentSource\IContentSourceConfigItem.cs" />
+    <Compile Include="IModuleController.cs" />
+    <Compile Include="Services\ContentSource\ContentSourceConfigAttribute.cs" />
+    <Compile Include="Services\ContentSource\ContentSourceConfigType.cs" />
+    <Compile Include="Services\ContentSource\ContentSourceEventArgs.cs" />
+    <Compile Include="Services\ContentSource\ContentSourceItem.cs" />
+    <Compile Include="Services\ContentSource\IContentSource.cs" />
+    <Compile Include="Services\ContentSource\IContentSourceConfigItem.cs" />
+    <Compile Include="Services\ContentTransformer\IContentTransformer.cs" />
+    <Compile Include="Services\ModuleDiscovery\IModuleDiscoveryService.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="ServiceAttribute.cs" />
+    <Compile Include="Services\ModuleDiscovery\IModuleInfo.cs" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

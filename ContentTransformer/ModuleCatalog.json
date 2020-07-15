@@ -1,0 +1,8 @@
+{
+  "modules": [
+    {
+      "name": "SPAR Module",
+      "assembly": "SPAR.TransformerModule"
+    }
+  ] 
+}

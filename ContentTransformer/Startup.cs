@@ -5,6 +5,10 @@ using System.Linq;
 using System.Reflection;
 using System.Web.Http;
 using System.Web.Http.Dispatcher;
+using ContentTransformer.Common;
+using ContentTransformer.Common.Services.ModuleDiscovery;
+using ContentTransformer.Services;
+using ContentTransformer.Services.ModuleDiscovery;
 using Microsoft.Owin;
 using Microsoft.Owin.FileSystems;
 using Microsoft.Owin.StaticFiles;
@@ -19,6 +23,7 @@ namespace ContentTransformer
     {
         private static IUnityContainer _unityContainer;
 
+        // ReSharper disable once UnusedMember.Global
         public void Configuration(IAppBuilder app)
         {
             HttpConfiguration httpConfiguration = new HttpConfiguration();
@@ -29,17 +34,8 @@ namespace ContentTransformer
             #region Create WWW
             const string rootName = "www";
             string rootPath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? throw new InvalidOperationException(), rootName);
-            #endregion
-
-            #region Configure Unity
-            _unityContainer = new UnityContainer();
-            httpConfiguration.DependencyResolver = new UnityDependencyResolver(_unityContainer);
-
-            //Register Controllers
-            Type controllerType = typeof(ApiController);
-            Type[] types = Assembly.GetExecutingAssembly().GetTypes().Where(x => controllerType.IsAssignableFrom(x)).ToArray();
-            foreach (Type type in types)
-                _unityContainer.RegisterType(type);
+            if (!Directory.Exists(rootPath))
+                Directory.CreateDirectory(rootPath);
             #endregion
 
             #region Configure WebAPI
@@ -75,6 +71,21 @@ namespace ContentTransformer
             };
             app.UseFileServer(fileServerOptions);
             #endregion
+
+            #region Configure Unity
+            _unityContainer = new UnityContainer();
+            httpConfiguration.DependencyResolver = new UnityDependencyResolver(_unityContainer);
+
+            //Register Controllers
+            Type controllerType = typeof(ApiController);
+            Type[] types = Assembly.GetExecutingAssembly().GetTypes().Where(x => controllerType.IsAssignableFrom(x)).ToArray();
+            foreach (Type type in types)
+                _unityContainer.RegisterType(type);
+
+            _unityContainer.RegisterSingleton<IModuleDiscoveryService, ModuleDiscoveryService>();
+            #endregion
+
+            _unityContainer.Resolve<IModuleDiscoveryService>().DiscoverModules();
 
             httpConfiguration.EnsureInitialized();
         }

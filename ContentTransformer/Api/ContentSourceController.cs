@@ -2,8 +2,8 @@
 
 namespace ContentTransformer.Api
 {
-    [RoutePrefix("content-discovery-api")]
-    public class ContentDiscoveryController : ApiController
+    [RoutePrefix("content-source-api")]
+    public class ContentSourceController : ApiController
     {
         [HttpGet]
         [Route("get")]
