@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace ContentTransformer.Common.ContentSource
+namespace ContentTransformer.Common.Services.ContentSource
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true)]
     public class ContentSourceConfigAttribute : Attribute, IContentSourceConfigItem

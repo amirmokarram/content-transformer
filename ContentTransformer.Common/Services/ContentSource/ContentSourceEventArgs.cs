@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ContentTransformer.Common.ContentSource
+namespace ContentTransformer.Common.Services.ContentSource
 {
     public class ContentSourceEventArgs : EventArgs
     {

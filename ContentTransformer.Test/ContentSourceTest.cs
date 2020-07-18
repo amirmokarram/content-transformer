@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
-using ContentTransformer.Common.ContentSource;
+using ContentTransformer.Common.Services.ContentSource;
 using ContentTransformer.Services.ContentSource.Sources;
 using FluentAssertions;
 using Xunit;
@@ -38,7 +38,6 @@ namespace ContentTransformer.Test
                 Directory.CreateDirectory(pathToWatch);
                 Dictionary<string, string> parameters = new Dictionary<string, string>
                 {
-                    {FileSystemContentSource.ArchiveNameConfig, "archive"},
                     {FileSystemContentSource.PathConfig, pathToWatch}
                 };
                 fsContentSource.Init(parameters);
@@ -63,7 +62,6 @@ namespace ContentTransformer.Test
             {
                 Dictionary<string, string> parameters = new Dictionary<string, string>
                 {
-                    {FtpContentSource.ArchiveNameConfig, "archive"},
                     {FtpContentSource.HostConfig, "ftp://192.168.1.100"},
                     {FtpContentSource.UsernameConfig, "mokarram"},
                     {FtpContentSource.PasswordConfig, "4168"}

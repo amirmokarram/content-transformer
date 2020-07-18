@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using ContentTransformer.Common.ContentSource;
+using ContentTransformer.Common.Services.ContentSource;
 
 namespace ContentTransformer.Services.ContentSource
 {
@@ -25,6 +25,9 @@ namespace ContentTransformer.Services.ContentSource
         {
             get { return _configItems.Values; }
         }
+
+        public abstract string Identity { get; }
+
         public void Init(IDictionary<string, string> parameters)
         {
             foreach (IContentSourceConfigItem configItem in ConfigItems.Where(x => x.IsRequired))
@@ -42,6 +45,7 @@ namespace ContentTransformer.Services.ContentSource
         public abstract void Resume();
         public abstract byte[] Read(ContentSourceItem item);
         public abstract void Archive(ContentSourceItem item);
+        public abstract void Output(string name, Stream input);
         #endregion
 
         #region Implementation of IDisposable
@@ -51,6 +55,15 @@ namespace ContentTransformer.Services.ContentSource
             GC.SuppressFinalize(this);
         }
         #endregion
+
+        protected virtual string ArchiveDirectoryName
+        {
+            get { return "$archive"; }
+        }
+        protected virtual string OutputDirectoryName
+        {
+            get { return "$output"; }
+        }
 
         protected abstract void OnInit();
         protected abstract IEnumerable<ContentSourceItem> ReadExistItems();

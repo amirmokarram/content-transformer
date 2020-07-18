@@ -1,4 +1,5 @@
 ﻿using ContentTransformer.Common;
+using OfficeOpenXml;
 
 namespace SPAR.TransformerModule
 {
@@ -7,7 +8,6 @@ namespace SPAR.TransformerModule
         #region Implementation of IModuleController
         public void Init()
         {
-            
         }
         #endregion
     }

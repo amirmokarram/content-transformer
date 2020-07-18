@@ -1,8 +1,12 @@
 {
   "modules": [
     {
+      "name": "Core Module",
+      "assembly": "ContentTransformer"
+    },
+    {
       "name": "SPAR Module",
       "assembly": "SPAR.TransformerModule"
     }
-  ] 
+  ]
 }

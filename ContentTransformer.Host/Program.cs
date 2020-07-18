@@ -1,31 +1,36 @@
 ﻿using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
-using Microsoft.Owin.Hosting;
+using ContentTransformer.Common;
 using Newtonsoft.Json;
 using Topshelf;
 
-namespace ContentTransformer
+namespace ContentTransformer.Host
 {
     internal class Program
     {
         private static int Main()
         {
+            Type launcherType = Type.GetType(ConfigurationManager.AppSettings["launcherType"]);
+            if (launcherType == null)
+                throw new Exception("The launcher type setting must be defined.");
+
             TopshelfExitCode exitCode = HostFactory.Run(hostConfigurator =>
             {
-                WebConfig config = WebConfig.TryLoadOrNewWebRunnerConfig();
+                WebApplicationConfig config = WebApplicationConfig.TryLoadOrNewWebRunnerConfig();
 
                 hostConfigurator.AddCommandLineDefinition("useSSL", useSSLArgument => { config.UseSSL = bool.Parse(useSSLArgument); });
                 hostConfigurator.AddCommandLineDefinition("isLocalMode", isLocalModeArgument => { config.IsLocalMode = bool.Parse(isLocalModeArgument); });
                 hostConfigurator.AddCommandLineDefinition("port", portArgument => { config.Port = int.Parse(portArgument); });
                 hostConfigurator.ApplyCommandLine();
 
-                hostConfigurator.Service<WebLauncher>(s =>
+                hostConfigurator.Service<WebApplicationLauncherAdapter>(s =>
                 {
-                    s.ConstructUsing(hostSettings => new WebLauncher(config.GetUrl()));
+                    s.ConstructUsing(hostSettings => new WebApplicationLauncherAdapter(launcherType));
 
-                    s.WhenStarted(o => o.Start());
+                    s.WhenStarted(o => o.Start(config));
                     s.WhenStopped(o => o.Stop());
 
                     s.AfterStartingService(() =>
@@ -53,28 +58,30 @@ namespace ContentTransformer
             return (int)exitCode;
         }
 
-        private class WebLauncher
+        #region Inner Types
+        private class WebApplicationLauncherAdapter : IWebApplicationLauncher
         {
-            private IDisposable _app;
-            private readonly string _url;
+            private readonly IWebApplicationLauncher _targetLauncher;
 
-            public WebLauncher(string url)
+            public WebApplicationLauncherAdapter(Type targetType)
             {
-                _url = url;
+                _targetLauncher = (IWebApplicationLauncher)Activator.CreateInstance(targetType);
             }
 
-            public void Start()
+            #region Implementation of IWebApplicationLauncher
+            public void Start(IWebApplicationConfig configuration)
             {
-                _app = WebApp.Start<Startup>(_url);
+                _targetLauncher.Start(configuration);
             }
             public void Stop()
             {
-                _app.Dispose();
+                _targetLauncher.Stop();
             }
+            #endregion
         }
-        private class WebConfig
+        private class WebApplicationConfig : IWebApplicationConfig
         {
-            public WebConfig()
+            public WebApplicationConfig()
             {
                 IsLocalMode = true;
                 Port = 5000;
@@ -86,26 +93,27 @@ namespace ContentTransformer
             public bool IsLocalMode { get; set; }
             [JsonProperty("port", DefaultValueHandling = DefaultValueHandling.Ignore)]
             public int Port { get; set; }
-            [JsonProperty("openBrowser", DefaultValueHandling = DefaultValueHandling.Ignore)]
-            public bool OpenBrowser { get; set; }
-
             public string GetUrl()
             {
                 return $"{(UseSSL ? "https" : "http")}://{(IsLocalMode ? "localhost" : "*")}:{Port}";
             }
 
-            public static WebConfig TryLoadOrNewWebRunnerConfig()
+            [JsonProperty("openBrowser", DefaultValueHandling = DefaultValueHandling.Ignore)]
+            public bool OpenBrowser { get; set; }
+
+            public static WebApplicationConfig TryLoadOrNewWebRunnerConfig()
             {
                 Assembly assembly = Assembly.GetExecutingAssembly();
                 string configDirectoryName = Path.GetDirectoryName(assembly.Location);
                 if (configDirectoryName == null)
-                    return new WebConfig();
+                    return new WebApplicationConfig();
                 string configFileName = Path.Combine(configDirectoryName, $"{Path.GetFileNameWithoutExtension(assembly.Location)}.json");
                 if (!File.Exists(configFileName))
-                    return new WebConfig();
+                    return new WebApplicationConfig();
                 string configJsonContent = File.ReadAllText(configFileName);
-                return JsonConvert.DeserializeObject<WebConfig>(configJsonContent);
+                return JsonConvert.DeserializeObject<WebApplicationConfig>(configJsonContent);
             }
         }
+        #endregion
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace ContentTransformer.Common.ContentSource
+﻿namespace ContentTransformer.Common.Services.ContentSource
 {
     public interface IContentSourceConfigItem
     {

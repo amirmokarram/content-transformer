@@ -6,12 +6,12 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using ContentTransformer.Common.ContentSource;
+using ContentTransformer.Common.Services.ContentSource;
 using FluentFTP;
 
 namespace ContentTransformer.Services.ContentSource.Sources
 {
-    [ContentSourceConfig(ArchiveNameConfig, Title = "The archive directory name", ConfigType = ContentSourceConfigType.String, IsRequired = true)]
+    [ContentSource("FTP", Title = "File Transfer Protocol (FTP)")]
     [ContentSourceConfig(HostConfig, Title = "Host address", ConfigType = ContentSourceConfigType.String, IsRequired = true)]
     [ContentSourceConfig(UsernameConfig, Title = "Username", ConfigType = ContentSourceConfigType.String)]
     [ContentSourceConfig(PasswordConfig, Title = "Password", ConfigType = ContentSourceConfigType.String)]
@@ -19,7 +19,6 @@ namespace ContentTransformer.Services.ContentSource.Sources
     internal class FtpContentSource : ContentSource
     {
         #region Config Constant
-        internal const string ArchiveNameConfig = "archiveName";
         internal const string HostConfig = "host";
         internal const string UsernameConfig = "username";
         internal const string PasswordConfig = "password";
@@ -33,7 +32,6 @@ namespace ContentTransformer.Services.ContentSource.Sources
 
         private bool _paused;
         private int _interval = 10;
-        private string _archiveDirectoryName;
 
         public FtpContentSource()
         {
@@ -44,7 +42,14 @@ namespace ContentTransformer.Services.ContentSource.Sources
             _ftpPollingTask = new Task(FtpWatcher, _cancellationTokenSource.Token, TaskCreationOptions.LongRunning);
         }
 
-        #region Implementation of IContentSource
+        #region Implementation of ContentSource
+        public override string Identity
+        {
+            get
+            {
+                return $"FTP|{ResolveParameter<string>(HostConfig)}";
+            }
+        }
         public override void Start()
         {
             if (_ftpPollingTask.Status == TaskStatus.Running)
@@ -73,6 +78,10 @@ namespace ContentTransformer.Services.ContentSource.Sources
         {
             throw new NotImplementedException();
         }
+        public override void Output(string name, Stream input)
+        {
+            throw new NotImplementedException();
+        }
         #endregion
 
         #region Overrides of ContentSource
@@ -89,11 +98,10 @@ namespace ContentTransformer.Services.ContentSource.Sources
 
             _ftpClient.Connect(profile);
             
-            string archiveNameValue = ResolveParameter<string>(ArchiveNameConfig);
-            _archiveDirectoryName = archiveNameValue.StartsWith("$") ? archiveNameValue : $"${archiveNameValue}";
-
-            if (!_ftpClient.DirectoryExists(_archiveDirectoryName))
-                _ftpClient.CreateDirectory(_archiveDirectoryName);
+            if (!_ftpClient.DirectoryExists(ArchiveDirectoryName))
+                _ftpClient.CreateDirectory(ArchiveDirectoryName);
+            if (!_ftpClient.DirectoryExists(OutputDirectoryName))
+                _ftpClient.CreateDirectory(OutputDirectoryName);
         }
         protected override IEnumerable<ContentSourceItem> ReadExistItems()
         {

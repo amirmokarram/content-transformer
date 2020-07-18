@@ -36,11 +36,27 @@ namespace ContentTransformer.Services.ModuleDiscovery
         }
         public void DiscoverModules()
         {
+            List<Type> controllers = new List<Type>();
+            List<ServiceInfo> onDemandServices = new List<ServiceInfo>();
+
             foreach (ModuleInfo module in _moduleCatalog.Modules)
             {
                 if (module.ModuleController != null)
-                    ((IModuleController)_container.Resolve(module.ModuleController)).Init();
+                    controllers.Add(module.ModuleController);
+
+                foreach (ServiceInfo service in module.Services)
+                {
+                    _container.RegisterSingleton(service.ServiceType, service.InstanceType);
+                    if (service.OnDemand)
+                        onDemandServices.Add(service);
+                }
             }
+
+            foreach (ServiceInfo service in onDemandServices)
+                ((IServiceInitializer) _container.Resolve(service.ServiceType)).Init();
+
+            foreach (Type controller in controllers)
+                ((IModuleController) _container.Resolve(controller)).Init();
         }
         #endregion
         
@@ -58,11 +74,11 @@ namespace ContentTransformer.Services.ModuleDiscovery
         private class ModuleInfo : IModuleInfo
         {
             private string _assemblyName;
-            private readonly List<Type> _services;
+            private readonly List<ServiceInfo> _services;
 
             public ModuleInfo()
             {
-                _services = new List<Type>();
+                _services = new List<ServiceInfo>();
             }
 
             #region Implementation of IModuleInfo
@@ -78,10 +94,11 @@ namespace ContentTransformer.Services.ModuleDiscovery
                     EnsureInit();
                 }
             }
+            public Assembly ModuleAssembly { get; private set; }
             #endregion
 
             public Type ModuleController { get; private set; }
-            public IEnumerable<Type> Services
+            public IEnumerable<ServiceInfo> Services
             {
                 get { return _services; }
             }
@@ -96,8 +113,10 @@ namespace ContentTransformer.Services.ModuleDiscovery
                 _init = true;
 
                 string rootDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                Assembly moduleAssembly = Assembly.LoadFile(Path.Combine(rootDirectory, $"{AssemblyName}.dll"));
-                Type[] moduleAllTypes = moduleAssembly.GetTypes();
+                if (string.IsNullOrEmpty(rootDirectory))
+                    throw new DirectoryNotFoundException("The root of the directory for module discovery is not found.");
+                ModuleAssembly = Assembly.LoadFile(Path.Combine(rootDirectory, $"{AssemblyName}.dll"));
+                Type[] moduleAllTypes = ModuleAssembly.GetTypes();
 
                 foreach (Type type in moduleAllTypes)
                 {
@@ -108,13 +127,26 @@ namespace ContentTransformer.Services.ModuleDiscovery
                     }
 
                     if (type.GetCustomAttribute<ServiceAttribute>() != null)
-                    {
-                        _services.Add(type);
-                        continue;
-                    }
+                        _services.Add(new ServiceInfo(type));
                 }
             }
             #endregion
+        }
+        public class ServiceInfo
+        {
+            public ServiceInfo(Type targetType)
+            {
+                ServiceAttribute serviceAttribute = targetType.GetCustomAttribute<ServiceAttribute>();
+                if (serviceAttribute == null)
+                    throw new NotSupportedException($"The target type '{targetType.FullName}' is not marked with 'ServiceAttribute'.");
+                ServiceType = serviceAttribute.ServiceType ?? targetType;
+                InstanceType = targetType;
+                OnDemand = typeof(IServiceInitializer).IsAssignableFrom(targetType);
+            }
+
+            public Type ServiceType { get; }
+            public Type InstanceType { get; }
+            public bool OnDemand { get; }
         }
         #endregion
     }

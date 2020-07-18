@@ -1,0 +1,14 @@
+{
+  "transformers": [
+    {
+      "typeName": "SPAR.TransformerModule.ContentTransformers.Invoice.InvoiceContentTransformer,SPAR.TransformerModule",
+      "contentSource": {
+        "name": "FileSystem",
+        "config": {
+          "path": "E:\\MyProjects\\SourceFiles",
+          "archiveName": "$archive"
+        }
+      }
+    }
+  ]
+}
