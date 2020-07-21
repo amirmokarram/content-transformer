@@ -1,0 +1,6 @@
+{
+  "useSSL": false,
+  "isLocalMode": false,
+  "port": 5000,
+  "openBrowser": false
+}

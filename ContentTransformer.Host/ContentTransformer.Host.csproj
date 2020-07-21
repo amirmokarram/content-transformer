@@ -63,6 +63,9 @@
     <Content Include="TransformerCatalog.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="ContentTransformer.Host.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\ContentTransformer.Common\ContentTransformer.Common.csproj">

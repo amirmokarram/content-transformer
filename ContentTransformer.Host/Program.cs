@@ -20,7 +20,7 @@ namespace ContentTransformer.Host
             TopshelfExitCode exitCode = HostFactory.Run(hostConfigurator =>
             {
                 WebApplicationConfig config = WebApplicationConfig.TryLoadOrNewWebRunnerConfig();
-
+                
                 hostConfigurator.AddCommandLineDefinition("useSSL", useSSLArgument => { config.UseSSL = bool.Parse(useSSLArgument); });
                 hostConfigurator.AddCommandLineDefinition("isLocalMode", isLocalModeArgument => { config.IsLocalMode = bool.Parse(isLocalModeArgument); });
                 hostConfigurator.AddCommandLineDefinition("port", portArgument => { config.Port = int.Parse(portArgument); });
@@ -29,7 +29,7 @@ namespace ContentTransformer.Host
                 hostConfigurator.Service<WebApplicationLauncherAdapter>(s =>
                 {
                     s.ConstructUsing(hostSettings => new WebApplicationLauncherAdapter(launcherType));
-
+                    
                     s.WhenStarted(o => o.Start(config));
                     s.WhenStopped(o => o.Stop());
 
@@ -45,14 +45,25 @@ namespace ContentTransformer.Host
                 });
 
                 hostConfigurator.RunAsNetworkService();
+                hostConfigurator.StartAutomatically();
+
                 hostConfigurator.SetServiceName("ContentTransformer");
                 hostConfigurator.SetDescription($"Content Transformer Service (v{Assembly.GetExecutingAssembly().GetName().Version})");
                 hostConfigurator.SetDisplayName($"Content Transformer - {config.GetUrl()}");
                 hostConfigurator.OnException(exception =>
                 {
-                    Console.Write(exception.Message);
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    while (true)
+                    {
+                        if (exception == null)
+                            break;
+                        Console.WriteLine(exception.Message);
+                        exception = exception.InnerException;
+                    }
+                    Console.ResetColor();
+                    Console.WriteLine("Press any key to exit...");
+                    Console.ReadKey();
                 });
-                hostConfigurator.StartAutomatically();
             });
 
             return (int)exitCode;
