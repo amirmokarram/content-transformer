@@ -122,7 +122,8 @@
     Id              INTEGER       PRIMARY KEY AUTOINCREMENT
                                   UNIQUE
                                   NOT NULL,
-    Created       DATETIME,
+    Created       DATETIME NOT NULL,
+    Name VARCHAR (128) NOT NULL,
     TransformerType VARCHAR (256) NOT NULL,
     SourceIdentity VARCHAR (512) NOT NULL
 );
@@ -132,9 +133,13 @@ CREATE TABLE Contents (
                                 NOT NULL,
     TransformerId INT           CONSTRAINT FK_Transformer REFERENCES Transformers (Id) ON DELETE CASCADE
                                 NOT NULL,
-    Created       DATETIME,
-    ContentHash   VARCHAR (128)  NOT NULL,
-    ContentPath   VARCHAR (256) 
+    Created       DATETIME NOT NULL,
+    ContentHash   INTEGER  NOT NULL,
+    ContentFileName   VARCHAR (256)  NOT NULL
+);
+CREATE UNIQUE INDEX UniqueTransformer ON Transformers (
+    TransformerType,
+    SourceIdentity
 );</value>
   </data>
 </root>

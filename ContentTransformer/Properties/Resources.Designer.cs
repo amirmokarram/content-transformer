@@ -65,7 +65,8 @@ namespace ContentTransformer.Properties {
         ///    Id              INTEGER       PRIMARY KEY AUTOINCREMENT
         ///                                  UNIQUE
         ///                                  NOT NULL,
-        ///    Created       DATETIME,
+        ///    Created       DATETIME NOT NULL,
+        ///    Name VARCHAR (128) NOT NULL,
         ///    TransformerType VARCHAR (256) NOT NULL,
         ///    SourceIdentity VARCHAR (512) NOT NULL
         ///);
@@ -73,7 +74,7 @@ namespace ContentTransformer.Properties {
         ///    Id            INTEGER       PRIMARY KEY AUTOINCREMENT
         ///                                UNIQUE
         ///                                NOT NULL,
-        ///    TransformerId INT           CONSTRAINT FK_T [rest of string was truncated]&quot;;.
+        ///     [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string ContentTransformerDatabaseScript {
             get {

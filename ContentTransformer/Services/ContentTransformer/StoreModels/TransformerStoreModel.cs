@@ -7,6 +7,7 @@ namespace ContentTransformer.Services.ContentTransformer.StoreModels
     {
         public int Id { get; set; }
         public DateTime Created { get; set; }
+        public string Name { get; set; }
         public string TransformerType { get; set; }
         public string SourceIdentity { get; set; }
     }

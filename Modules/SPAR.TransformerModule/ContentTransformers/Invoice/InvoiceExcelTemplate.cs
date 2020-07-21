@@ -92,12 +92,27 @@ namespace SPAR.TransformerModule.ContentTransformers.Invoice
 
         public void ApplyData(IEnumerable<Invoice> yearlyInvoices)
         {
-            foreach (IGrouping<string, Invoice> monthGrouping in yearlyInvoices.GroupBy(x => KeyLookup[x.CreateDate.Month]))
+            PropertyInfo[] properties = typeof(Invoice).GetProperties();
+            int row = 1;
+            foreach (IGrouping<string, Invoice> monthGrouping in yearlyInvoices.OrderBy(x => x.Branch).GroupBy(x => KeyLookup[x.CreateDate.Month]))
             {
+                Invoice[] invoices = monthGrouping.OrderBy(x => x.CreateDate).ToArray();
                 ExcelWorksheet worksheet = _sheets[monthGrouping.Key];
-                foreach (Invoice invoice in monthGrouping)
+                worksheet.InsertRow(row + 1, invoices.Length);
+
+                foreach (IGrouping<int, Invoice> branchGrouping in invoices.GroupBy(x => x.Branch))
                 {
-                    
+                    int cell = 0;
+                    foreach (Invoice invoice in branchGrouping)
+                    {
+                        row++;
+                        cell = 1;
+                        foreach (PropertyInfo property in properties)
+                            worksheet.Cells[row, cell++].Value = property.GetValue(invoice);
+                    }
+
+                    decimal summaries = branchGrouping.Sum(x => x.Total);
+                    worksheet.Cells[row, cell].Value = summaries;
                 }
             }
         }

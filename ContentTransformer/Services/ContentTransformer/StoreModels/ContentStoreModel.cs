@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using ContentTransformer.Common.Services.ContentTransformer;
 
 namespace ContentTransformer.Services.ContentTransformer.StoreModels
@@ -8,11 +9,12 @@ namespace ContentTransformer.Services.ContentTransformer.StoreModels
         public int Id { get; set; }
         public int TransformerId { get; set; }
         public DateTime Created { get; set; }
-        public string ContentHash { get; set; }
-        public string ContentPath { get; set; }
+        public int ContentHash { get; set; }
+        public string ContentFileName { get; set; }
         public byte[] Load()
         {
-            return null;
+            string filename = Path.Combine(Environment.CurrentDirectory, ContentTransformerStorage.StoreDirectoryName, TransformerId.ToString(), ContentFileName);
+            return File.ReadAllBytes(filename);
         }
     }
 }

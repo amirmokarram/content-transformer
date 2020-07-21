@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Globalization;
+using System.Threading;
 
 namespace SPAR.TransformerModule.ContentTransformers.Invoice
 {
@@ -31,10 +33,11 @@ namespace SPAR.TransformerModule.ContentTransformers.Invoice
             string[] invoiceParts = data.Split(';');
             Invoice invoice = new Invoice();
             invoice.Branch = int.Parse(invoiceParts[0]);
-            invoice.CreateDate = DateTime.Parse(invoiceParts[1]);
+            invoice.CreateDate = DateTime.ParseExact(invoiceParts[1], "yyyyMMdd", new DateTimeFormatInfo());
             invoice.Code = invoiceParts[2];
-            invoice.Price = int.Parse(invoiceParts[3]);
-            invoice.Quantity = int.Parse(invoiceParts[5]);
+            if (decimal.TryParse(invoiceParts[3], NumberStyles.Currency, Thread.CurrentThread.CurrentCulture.NumberFormat, out decimal priceResult))
+                invoice.Price = priceResult;
+            invoice.Quantity = int.Parse(invoiceParts[5].Substring(0, invoiceParts[5].IndexOf(',')));
             return invoice;
         }
         #endregion

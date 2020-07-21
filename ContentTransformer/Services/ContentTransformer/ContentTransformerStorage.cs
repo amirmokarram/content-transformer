@@ -4,7 +4,7 @@ using System.Data;
 using System.Data.SQLite;
 using System.IO;
 using System.Linq;
-using System.Runtime.Remoting.Contexts;
+using System.Security.Cryptography;
 using ContentTransformer.Common;
 using ContentTransformer.Common.Services.ContentSource;
 using ContentTransformer.Common.Services.ContentTransformer;
@@ -16,17 +16,18 @@ namespace ContentTransformer.Services.ContentTransformer
     [Service(ServiceType = typeof(IContentTransformerStorage))]
     internal class ContentTransformerStorage : IContentTransformerStorage, IDisposable
     {
+        internal const string StoreDirectoryName = "$contents";
         private const string DatabaseName = "ContentTransformer.db";
 
         private readonly SQLiteConnection _dbConnection;
         private readonly List<TransformerStoreModel> _transformers;
-        private readonly string _storeDirectoryName;
+        private readonly string _storeContentDirectoryName;
 
         public ContentTransformerStorage()
         {
-            _storeDirectoryName = Path.Combine(Environment.CurrentDirectory, "$contents");
-            if (!Directory.Exists(_storeDirectoryName))
-                Directory.CreateDirectory(_storeDirectoryName);
+            _storeContentDirectoryName = Path.Combine(Environment.CurrentDirectory, StoreDirectoryName);
+            if (!Directory.Exists(_storeContentDirectoryName))
+                Directory.CreateDirectory(_storeContentDirectoryName);
 
             _transformers = new List<TransformerStoreModel>();
 
@@ -39,7 +40,7 @@ namespace ContentTransformer.Services.ContentTransformer
             }
 
             _dbConnection = new SQLiteConnection($"Data Source={DatabaseName};Version=3;");
-
+            
             if (!isFirstTime)
             {
                 EnsureLoadTransformers();
@@ -47,32 +48,72 @@ namespace ContentTransformer.Services.ContentTransformer
             }
             
             _dbConnection.Execute(Properties.Resources.ContentTransformerDatabaseScript);
+            EnsureLoadTransformers();
         }
 
         #region Implementation of IContentTransformerStorage
-        public bool Exist(IContentTransformer transformer, IContentSource source)
+        public IEnumerable<ITransformerStoreModel> GetTransformers()
         {
-            return _dbConnection.QuerySingleOrDefault<bool>($"SELECT 1 FROM Transformers WHERE TransformerType='{transformer.GetType().FullName}' AND SourceIdentity='{source.Identity}'");
+            return _transformers;
         }
-        public ITransformerStoreModel Get(IContentTransformer transformer, IContentSource source)
+        public ITransformerStoreModel AddOrGetTransformer(IContentTransformer transformer, IContentSource source)
         {
-            return _dbConnection.QueryFirst<TransformerStoreModel>($"SELECT * FROM Transformers WHERE TransformerType='{transformer.GetType().FullName}' AND SourceIdentity='{source.Identity}'");
+            ITransformerStoreModel currentTransformer = _transformers.Find(model => model.TransformerType == transformer.GetType().FullName && model.SourceIdentity == source.Identity);
+            if (currentTransformer != null)
+                return currentTransformer;
+            
+            _dbConnection.Execute($"INSERT INTO Transformers (Created, Name, TransformerType, SourceIdentity) VALUES ('{DateTime.Now:yyyy-MM-dd hh:mm:ss}', '{transformer.GetType().Assembly.GetName().Name}', '{transformer.GetType().FullName}', '{source.Identity}')");
+
+            TransformerStoreModel transformerStoreModel = (TransformerStoreModel)GetTransformer(transformer, source);
+            Directory.CreateDirectory(Path.Combine(_storeContentDirectoryName, transformerStoreModel.Id.ToString()));
+            _transformers.Add(transformerStoreModel);
+            return transformerStoreModel;
         }
-        public void Add(IContentTransformer transformer, IContentSource source)
+        public void AddContent(IContentTransformer transformer, IContentSource source, byte[] content)
         {
-            _dbConnection.Execute($"INSERT INTO Transformers (Created, TransformerType, SourceIdentity) VALUES ('{DateTime.Now}', '{transformer.GetType().FullName}', '{source.Identity}')");
-            _transformers.Add((TransformerStoreModel)Get(transformer, source));
+            ITransformerStoreModel currentTransformer = GetTransformer(transformer, source);
+
+            string contentFileName = $"{Guid.NewGuid():N}.bin";
+            string contentFilePath = Path.Combine(_storeContentDirectoryName, currentTransformer.Id.ToString(), contentFileName);
+            int contentHash = BitConverter.ToInt32(new MD5CryptoServiceProvider().ComputeHash(content), 0);
+
+            try
+            {
+                lock (_dbConnection)
+                {
+                    if (ExistContent(currentTransformer.Id, contentHash))
+                        return;
+
+                    _dbConnection.Execute($"INSERT INTO Contents (TransformerId, Created, ContentHash, ContentFileName) VALUES ({currentTransformer.Id}, '{DateTime.Now:yyyy-MM-dd hh:mm:ss}', '{contentHash}', '{contentFileName}')");
+                    
+                    File.WriteAllBytes(contentFilePath, content);
+                }
+            }
+            catch
+            {
+                if (File.Exists(contentFilePath))
+                    File.Delete(contentFilePath);
+            }
         }
-        public void Add()
+        public IEnumerable<IContentStoreModel> GetContents(int transformerId)
         {
-        }
-        public IEnumerable<IContentStoreModel> GetContents(IContentTransformer transformer, IContentSource source)
-        {
-            TransformerStoreModel currentTransformer = _transformers.FirstOrDefault(x => x.TransformerType == transformer.GetType().FullName && x.SourceIdentity == source.Identity);
-            return currentTransformer == null ? null : _dbConnection.Query<ContentStoreModel>($"SELECT * FROM Contents WHERE TransformerId={currentTransformer.Id}");
+            return _dbConnection.Query<ContentStoreModel>($"SELECT * FROM Contents WHERE TransformerId={transformerId}");
         }
         #endregion
 
+        private bool ExistTransformer(IContentTransformer transformer, IContentSource source)
+        {
+            return _dbConnection.QuerySingleOrDefault<bool>($"SELECT 1 FROM Transformers WHERE TransformerType='{transformer.GetType().FullName}' AND SourceIdentity='{source.Identity}'");
+        }
+        private bool ExistContent(int transformerId, int contentHash)
+        {
+            return _dbConnection.QuerySingleOrDefault<bool>($"SELECT 1 FROM Contents WHERE TransformerId={transformerId} AND ContentHash={contentHash}");
+        }
+        private ITransformerStoreModel GetTransformer(IContentTransformer transformer, IContentSource source)
+        {
+            TransformerStoreModel currentTransformer = _transformers.FirstOrDefault(x => x.TransformerType == transformer.GetType().FullName && x.SourceIdentity == source.Identity);
+            return currentTransformer ?? _dbConnection.QueryFirst<TransformerStoreModel>($"SELECT * FROM Transformers WHERE TransformerType='{transformer.GetType().FullName}' AND SourceIdentity='{source.Identity}'");
+        }
         private void EnsureLoadTransformers()
         {
             _transformers.AddRange(_dbConnection.Query<TransformerStoreModel>("SELECT * FROM Transformers"));

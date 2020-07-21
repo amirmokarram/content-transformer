@@ -1,4 +1,5 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -8,7 +9,7 @@ namespace SPAR.TransformerModule.ContentTransformers.Invoice
 {
     internal class InvoiceContentTransformer : IContentTransformer
     {
-        public Stream Transform(IEnumerable<IContentStoreModel> contents)
+        public TransformInfo Transform(IEnumerable<IContentStoreModel> contents)
         {
             ConcurrentBag<Invoice> invoices = new ConcurrentBag<Invoice>();
             Parallel.ForEach(contents, content =>
@@ -22,14 +23,21 @@ namespace SPAR.TransformerModule.ContentTransformers.Invoice
                     }
                 }
             });
-
+            
             MemoryStream transformStream = new MemoryStream();
             using (InvoiceExcelTemplate template = new InvoiceExcelTemplate())
             {
                 template.ApplyData(invoices);
                 template.Save(transformStream);
             }
-            return transformStream;
+            transformStream.Position = 0;
+            return new TransformInfo
+            {
+                Name = $"SPAR{DateTime.Now:yyyyMMddhhmmss}",
+                Extension = ".xlsx",
+                MimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                TransformStream = transformStream
+            };
         }
     }
 }

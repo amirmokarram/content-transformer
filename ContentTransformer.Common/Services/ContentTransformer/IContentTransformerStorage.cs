@@ -16,15 +16,15 @@ namespace ContentTransformer.Common.Services.ContentTransformer
         int Id { get; }
         int TransformerId { get; }
         DateTime Created { get; }
-        string ContentHash { get; }
-        string ContentPath { get; }
+        int ContentHash { get; }
+        string ContentFileName { get; }
         byte[] Load();
     }
     public interface IContentTransformerStorage
     {
-        bool Exist(IContentTransformer transformer, IContentSource source);
-        ITransformerStoreModel Get(IContentTransformer transformer, IContentSource source);
-        void Add(IContentTransformer transformer, IContentSource source);
-        IEnumerable<IContentStoreModel> GetContents(IContentTransformer transformer, IContentSource source);
+        IEnumerable<ITransformerStoreModel> GetTransformers();
+        ITransformerStoreModel AddOrGetTransformer(IContentTransformer transformer, IContentSource source);
+        void AddContent(IContentTransformer transformer, IContentSource source, byte[] content);
+        IEnumerable<IContentStoreModel> GetContents(int transformerId);
     }
 }

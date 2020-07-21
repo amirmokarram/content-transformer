@@ -101,3 +101,30 @@ body {
   border-color: transparent;
   box-shadow: 0 0 0 3px rgba(255, 255, 255, .25);
 }
+
+
+div[transformer-container] > div {
+    margin-bottom: 10px;
+    border: 2px solid gray;
+}
+
+div[transformer-container] > div > div {
+    display: flex;
+}
+
+div[transformer-container] > div > div > div[title] {
+    background-color: gray;
+    color: white;
+    font-weight: bold;
+    width: 70px;
+    padding: 5px;
+}
+
+div[transformer-container] > div > div > div[value] {
+    padding: 5px;
+}
+
+div[transformer-container] > div > div[action] {
+    padding: 5px;
+    display: grid;
+}

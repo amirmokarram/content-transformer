@@ -1,6 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
 using ContentTransformer.Common;
 using ContentTransformer.Common.Services.ContentSource;
 using ContentTransformer.Common.Services.ContentTransformer;
@@ -14,7 +16,7 @@ namespace ContentTransformer.Services.ContentTransformer
         private readonly IUnityContainer _container;
         private readonly IContentSourceService _contentSourceService;
         private readonly IContentTransformerStorage _contentTransformerStorage;
-        private readonly List<TransformerProcessor> _transformerProcessors;
+        private readonly Dictionary<int, TransformerProcessor> _transformerProcessors;
 
         public ContentTransformerService(IUnityContainer container, IContentSourceService contentSourceService, IContentTransformerStorage contentTransformerStorage)
         {
@@ -22,8 +24,28 @@ namespace ContentTransformer.Services.ContentTransformer
             _contentSourceService = contentSourceService;
             _contentTransformerStorage = contentTransformerStorage;
 
-            _transformerProcessors = new List<TransformerProcessor>();
+            _transformerProcessors = new Dictionary<int, TransformerProcessor>();
         }
+
+        #region Implementation of IContentTransformerService
+        public HttpResponseMessage Transform(int id)
+        {
+            if (!_transformerProcessors.TryGetValue(id, out TransformerProcessor processor))
+                throw new Exception($"The transformer with id '{id}' is not registered.");
+
+            IEnumerable<IContentStoreModel> contentStoreModels = _contentTransformerStorage.GetContents(id);
+            TransformInfo transformInfo = processor.Transform(contentStoreModels);
+
+            HttpResponseMessage result = new HttpResponseMessage(HttpStatusCode.OK);
+            result.Content = new StreamContent(transformInfo.TransformStream);
+            result.Content.Headers.ContentType = new MediaTypeHeaderValue(transformInfo.MimeType);
+            result.Content.Headers.ContentDisposition = new ContentDispositionHeaderValue("attachment")
+            {
+                FileName = $"{transformInfo.Name}{transformInfo.Extension}"
+            };
+            return result;
+        }
+        #endregion
 
         #region Implementation of IServiceInitializer
         public void Init()
@@ -44,8 +66,8 @@ namespace ContentTransformer.Services.ContentTransformer
                 IContentSource source = _contentSourceService.Build(transformerConfig.ContentSource.Name);
                 source.Init(transformerConfig.ContentSource.Config);
 
-                _contentTransformerStorage.Add(transformer, source);
-                _transformerProcessors.Add(new TransformerProcessor(transformer, source));
+                ITransformerStoreModel transformerStoreModel = _contentTransformerStorage.AddOrGetTransformer(transformer, source);
+                _transformerProcessors.Add(transformerStoreModel.Id, new TransformerProcessor(_contentTransformerStorage, transformer, source));
             }
         }
         #endregion
@@ -53,32 +75,41 @@ namespace ContentTransformer.Services.ContentTransformer
         #region IDisposable
         public void Dispose()
         {
-            foreach (TransformerProcessor processor in _transformerProcessors)
+            foreach (TransformerProcessor processor in _transformerProcessors.Values)
                 processor.Dispose();
+            _transformerProcessors.Clear();
         }
         #endregion
 
         #region Inner Type
         private class TransformerProcessor : IDisposable
         {
+            private readonly IContentTransformerStorage _storage;
             private readonly IContentTransformer _transformer;
             private readonly IContentSource _source;
-            private readonly ConcurrentBag<ContentSourceItem> _bufferedItems;
 
-            public TransformerProcessor(IContentTransformer transformer, IContentSource source)
+            public TransformerProcessor(IContentTransformerStorage storage, IContentTransformer transformer, IContentSource source)
             {
-                _bufferedItems = new ConcurrentBag<ContentSourceItem>();
-
+                _storage = storage;
                 _transformer = transformer;
                 _source = source;
                 _source.SourceChanged += SourceChanged;
                 _source.Start();
             }
 
+            public TransformInfo Transform(IEnumerable<IContentStoreModel> contents)
+            {
+                TransformInfo result = _transformer.Transform(contents);
+                _source.Output($"{result.Name}{result.Extension}", result.TransformStream);
+                result.TransformStream.Position = 0;
+                return result;
+            }
+
             private void SourceChanged(object sender, ContentSourceEventArgs e)
             {
                 foreach (ContentSourceItem item in e.Items)
                 {
+                    _storage.AddContent(_transformer, _source, _source.Read(item));
                     _source.Archive(item);
                 }
             }

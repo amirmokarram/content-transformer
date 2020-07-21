@@ -5,8 +5,16 @@
       "contentSource": {
         "name": "FileSystem",
         "config": {
-          "path": "E:\\MyProjects\\SourceFiles",
-          "archiveName": "$archive"
+          "path": "E:\\MyProjects\\SourceFiles1"
+        }
+      }
+    },
+    {
+      "typeName": "SPAR.TransformerModule.ContentTransformers.Invoice.InvoiceContentTransformer,SPAR.TransformerModule",
+      "contentSource": {
+        "name": "FileSystem",
+        "config": {
+          "path": "E:\\MyProjects\\SourceFiles2"
         }
       }
     }
