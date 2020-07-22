@@ -46,7 +46,7 @@ namespace SPAR.TransformerModule.ContentTransformers.Invoice
 
         static InvoiceExcelTemplate()
         {
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial;
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
 
             List<SheetColumnInfo> temporaryList = new List<SheetColumnInfo>();
             temporaryList.AddRange(typeof(Invoice).GetProperties().Select(x => new SheetColumnInfo(x)));
@@ -90,17 +90,18 @@ namespace SPAR.TransformerModule.ContentTransformers.Invoice
             }
         }
 
-        public void ApplyData(IEnumerable<Invoice> yearlyInvoices)
+        public void ApplyData(IEnumerable<Invoice> allInvoices)
         {
             PropertyInfo[] properties = typeof(Invoice).GetProperties();
-            int row = 1;
-            foreach (IGrouping<string, Invoice> monthGrouping in yearlyInvoices.OrderBy(x => x.Branch).GroupBy(x => KeyLookup[x.CreateDate.Month]))
+            foreach (IGrouping<string, Invoice> monthGrouping in allInvoices.OrderBy(x => x.CreateDate).GroupBy(x => KeyLookup[x.CreateDate.Month]))
             {
-                Invoice[] invoices = monthGrouping.OrderBy(x => x.CreateDate).ToArray();
-                ExcelWorksheet worksheet = _sheets[monthGrouping.Key];
-                worksheet.InsertRow(row + 1, invoices.Length);
+                int row = 1;
 
-                foreach (IGrouping<int, Invoice> branchGrouping in invoices.GroupBy(x => x.Branch))
+                Invoice[] monthlyInvoices = monthGrouping.ToArray();
+                ExcelWorksheet worksheet = _sheets[monthGrouping.Key];
+                worksheet.InsertRow(row + 1, monthlyInvoices.Length);
+
+                foreach (IGrouping<int, Invoice> branchGrouping in monthlyInvoices.GroupBy(x => x.Branch))
                 {
                     int cell = 0;
                     foreach (Invoice invoice in branchGrouping)
